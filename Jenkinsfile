@@ -65,7 +65,7 @@ def buildImageAndRunTests(params, String suffix) {
         maybeArchiveArtifacts(params, suffix)
         return
     }
-    stage("Running tests") {
+    stage("Running tests (${suffix})") {
         // copy qemu archive and run directly on the host
         dir("qemu-${params.buildOS}") { deleteDir() }
         copyArtifacts projectName: "qemu/qemu-cheri", filter: "qemu-${params.buildOS}/**", target: '.', fingerprintArtifacts: false
