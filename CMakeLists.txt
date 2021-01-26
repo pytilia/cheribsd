@@ -138,7 +138,9 @@ file(WRITE ${CMAKE_BINARY_DIR}/kern_opt/opt_global.h "
 #include \"../cheri_builtins.h\"
 #undef __CHERI_PURE_CAPABILITY__
 #define KDB 1
-// #define COMPAT_FREEBSD11 1
+#define COMPAT_FREEBSD11 1
+#define COMPAT_FREEBSD12 1
+#define COMPAT_FREEBSD13 1
 #define COMPAT_FREEBSD32 1
 #define COMPAT_FREEBSD64 1
 #define CPU_CHERI 1
@@ -150,8 +152,9 @@ file(WRITE ${CMAKE_BINARY_DIR}/kern_opt/opt_global.h "
 #define YAMON 1
 #define INVARIANTS 1
 #define CPU_QEMU_RISCV
-// #define MAC 1
-// #define AUDIT 1")
+#define MAC 1
+#define AUDIT 1
+")
 
 file(WRITE ${CMAKE_BINARY_DIR}/kern_opt/opt_capsicum.h "
 #define CAPABILITIES 1
@@ -228,6 +231,7 @@ add_fake_targets_for_subdir(usr.bin)
 add_fake_targets_for_subdir(sbin)
 add_fake_targets_for_subdir(usr.sbin)
 add_fake_targets_for_subdir(tests/sys PREFIX tests_sys)
+target_include_directories(tests_sys_audit PRIVATE contrib/openbsm)
 target_include_directories(usr.bin_truss PRIVATE lib/libsysdecode)
 add_contrib_sources(usr.sbin_makefs contrib/mtree)
 add_contrib_sources(usr.sbin_makefs contrib/mknod)
