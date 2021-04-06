@@ -50,34 +50,42 @@ __FBSDID("$FreeBSD$");
 	.word	PAGE_MASK
 
 /*
- * Macro to handle the cache. This takes the start address in x0, length
- * in x1. It will corrupt x0, x1, x2, x3, and x4.
+ * Macro to handle the cache. This takes the start address in x/c0, length
+ * in x1. It will corrupt x0, x1, x2, x3, x4 and x6.
  */
 .macro cache_handle_range dcop = 0, ic = 0, icop = 0
+#ifdef __CHERI_PURE_CAPABILITY__
+	mov	c6, c0
+	gcvalue	x0, c6
+#endif
 .if \ic == 0
-	ldr	x3, =dcache_line_size	/* Load the D cache line size */
+	/* Load the D cache line size */
+	LDR_LABEL(x3, PTR(4), dcache_line_size)
 .else
-	ldr	x3, =idcache_line_size	/* Load the I & D cache line size */
+	/* Load the I & D cache line size */
+	LDR_LABEL(x3, PTR(4), idcache_line_size)
 .endif
-	ldr	x3, [x3]
 	sub	x4, x3, #1		/* Get the address mask */
 	and	x2, x0, x4		/* Get the low bits of the address */
 	add	x1, x1, x2		/* Add these to the size */
 	bic	x0, x0, x4		/* Clear the low bit of the address */
+#ifdef __CHERI_PURE_CAPABILITY__
+	scvalue	c0, c6, x0
+#endif
 .if \ic != 0
-	mov	x2, x0			/* Save the address */
+	mov	PTR(2), PTR(0)		/* Save the address */
 	mov	x4, x1			/* Save the size */
 .endif
 1:
-	dc	\dcop, x0
-	add	x0, x0, x3		/* Move to the next line */
+	dc	\dcop, PTR(0)
+	add	PTR(0), PTR(0), x3	/* Move to the next line */
 	subs	x1, x1, x3		/* Reduce the size */
 	b.hi	1b			/* Check if we are done */
 	dsb	ish
 .if \ic != 0
 2:
-	ic	\icop, x2
-	add	x2, x2, x3		/* Move to the next line */
+	ic	\icop, PTR(2)
+	add	PTR(2), PTR(2), x3	/* Move to the next line */
 	subs	x4, x4, x3		/* Reduce the size */
 	b.hi	2b			/* Check if we are done */
 	dsb	ish
@@ -163,20 +171,20 @@ END(arm64_aliasing_icache_sync_range)
  * int arm64_icache_sync_range_checked(vm_offset_t, vm_size_t)
  */
 ENTRY(arm64_icache_sync_range_checked)
-	adr	x5, cache_maint_fault
-	SET_FAULT_HANDLER(x5, x6)
+	adr	PTR(5), cache_maint_fault
+	SET_FAULT_HANDLER(PTR(5), PTR(6))
 	/* XXX: See comment in arm64_icache_sync_range */
 	cache_handle_range	dcop = cvau
 	ic	ialluis
 	dsb	ish
 	isb
-	SET_FAULT_HANDLER(xzr, x6)
+	SET_FAULT_HANDLER(xzr, PTR(6))
 	mov	x0, #0
 	ret
 END(arm64_icache_sync_range_checked)
 
 ENTRY(cache_maint_fault)
-	SET_FAULT_HANDLER(xzr, x1)
+	SET_FAULT_HANDLER(xzr, PTR(1))
 	mov	x0, #EFAULT
 	ret
 END(cache_maint_fault)
