@@ -154,6 +154,10 @@ CFLAGS+=	-fno-omit-frame-pointer -mno-omit-leaf-frame-pointer
 CFLAGS+=	-fPIC
 .endif
 
+.if ${MACHINE_ARCH:Maarch64*c*}
+LDFLAGS+=	--morello-c64-plt
+.endif
+
 # Temporary workaround for PR 196407, which contains the fascinating details.
 # Don't allow clang to use fpu instructions or registers in kernel modules.
 .if ${MACHINE_CPUARCH} == arm

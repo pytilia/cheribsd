@@ -142,6 +142,10 @@ CFLAGS+=	${GCOV_CFLAGS}
 # can override the others.
 CFLAGS+=	${CONF_CFLAGS}
 
+.if ${MACHINE_ARCH:Maarch64*c*}
+LDFLAGS+=	--morello-c64-plt
+.endif
+
 .if defined(LINKER_FEATURES) && ${LINKER_FEATURES:Mbuild-id}
 LDFLAGS+=	--build-id=sha1
 .endif

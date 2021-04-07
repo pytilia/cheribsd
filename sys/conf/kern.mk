@@ -120,8 +120,14 @@ CFLAGS += -mgeneral-regs-only
 # Reserve x18 for pcpu data
 CFLAGS += -ffixed-x18
 INLINE_LIMIT?=	8000
+
 .if ${MACHINE_CPU:Mcheri}
+AARCH64_MARCH=	morello
+.if ${MACHINE_ARCH:Maarch*c*}
+CFLAGS+=	-march=morello+c64 -mabi=purecap
+.else
 CFLAGS+=	-march=morello
+.endif
 .endif
 .endif
 
@@ -340,6 +346,7 @@ CCLDFLAGS+=	-fuse-ld=${LD:[1]:S/^ld.//1W}
 
 # Set target-specific linker emulation name.
 LD_EMULATION_aarch64=aarch64elf
+LD_EMULATION_aarch64c=aarch64elf_cheri
 LD_EMULATION_amd64=elf_x86_64_fbsd
 LD_EMULATION_arm=armelf_fbsd
 LD_EMULATION_armv6=armelf_fbsd
