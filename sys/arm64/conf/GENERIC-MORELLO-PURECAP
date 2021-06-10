@@ -1,5 +1,5 @@
 #
-# GENERIC-MORELLO -- Generic kernel configuration file for CheriBSD/Morello
+# GENERIC-MORELLO-PURECAP -- Generic kernel configuration file for CheriBSD/Morello pure capability ABI kernel
 #
 # For more information on this file, please read the config(5) manual page,
 # and/or the handbook section on Kernel Configuration Files:
@@ -18,24 +18,17 @@
 #
 # $FreeBSD$
 
-include GENERIC
+include "GENERIC-MORELLO"
 
-ident		GENERIC-MORELLO
+ident		GENERIC-MORELLO-PURECAP
 
-makeoptions	CPUTYPE=morello
-options 	CPU_CHERI
-options 	COMPAT_FREEBSD64
+machine 	arm64 aarch64c
 
-# Needs porting to use __USER_CAP
-nooptions 	COMPAT_FREEBSD32
+makeoptions	CHERI_SUBOBJECT_BOUNDS=subobject-safe
 
-# DTrace doesn't work with CHERI yet
-nooptions 	KDTRACE_HOOKS		# Kernel DTrace hooks
+options 	CHERI_PURECAP_KERNEL
 
-# Hybrid kernels need CHERI-aware firmware and pure-capability kernels need a
-# pure-capability interface or shims.
-nooptions 	EFIRT		# EFI Runtime Services
-
-# Unsupported devices we do not care about
-nodevice      rk_dwmmc
-nodevice      rk_emmcphy
+# Use FDT instead of ACPI discovery
+nodevice 	acpi
+options 	FDT_DTB_STATIC
+makeoptions 	FDT_DTS_FILE=morello-fvp.dts
