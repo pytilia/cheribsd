@@ -1,10 +1,7 @@
 /*-
- * Copyright (c) 2012-2018, 2020 Robert N. M. Watson
- * Copyright (c) 2014-2016,2020 SRI International
+ * SPDX-License-Identifier: BSD-2-Clause
  *
- * This software was developed by SRI International and the University of
- * Cambridge Computer Laboratory under DARPA/AFRL contract (FA8750-10-C-0237)
- * ("CTSRD"), as part of the DARPA CRASH research programme.
+ * Copyright (c) 2021 SRI International
  *
  * This software was developed by SRI International and the University of
  * Cambridge Computer Laboratory (Department of Computer Science and
@@ -33,30 +30,56 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _CHERIBSDTEST_MD_H_
-#define	_CHERIBSDTEST_MD_H_
+#include <sys/cdefs.h>
 
-#include <machine/armreg.h>
-
-#define	TRAPNO_CHERI		0
-#define	TRAPNO_STORE_CAP_PF	EXCP_DATA_ABORT_L
-#define	TRAPNO_LOAD_STORE	EXCP_DATA_ABORT_L
-
-#define	CHERI_SEAL_VIOLATION_EXCEPTION	0
-
-#define	SI_CODE_STORELOCAL	PROT_CHERI_PERM
-
-#define	FLAKY_COMPILER_BOUNDS	"Morello compiler pads excessively"
-
-#ifndef __CHERI_PURE_CAPABILITY__
-/* The Morello compiler currently sets bounds on globals. */
-#define	XFAIL_HYBRID_BOUNDS_GLOBALS	NULL
-#define	XFAIL_HYBRID_BOUNDS_GLOBALS_STATIC	NULL
-#define	XFAIL_HYBRID_BOUNDS_GLOBALS_EXTERN	NULL
+#if !__has_feature(capabilities)
+#error "This code requires a CHERI-aware compiler"
 #endif
 
-#ifdef __CHERI_PURE_CAPABILITY__
-#define	XFAIL_VARARG_BOUNDS	"varargs bounds known to be unimplemented"
-#endif
+#include <sys/param.h>
 
-#endif /* !_CHERIBSDTEST_H_ */
+#include <cheri/cheri.h>
+#include <cheri/cheric.h>
+
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "cheribsdtest.h"
+
+#define	STR_VAL	"123"
+
+CHERIBSDTEST(test_store_local,
+    "Checks local capabilities can not be stored via non-store-local capabilities",
+    .ct_flags = CT_FLAG_SIGNAL | CT_FLAG_SI_CODE | CT_FLAG_SI_TRAPNO,
+    .ct_signum = SIGPROT,
+    .ct_si_code = SI_CODE_STORELOCAL,
+    .ct_si_trapno = TRAPNO_LOAD_STORE)
+{
+	char str[] = STR_VAL;
+	char * __capability cap = str;
+	char * __capability target;
+	char * __capability * __capability targetp = &target;
+
+	CHERIBSDTEST_VERIFY(strcmp(STR_VAL, str) == 0);
+	*targetp = cap;
+	CHERIBSDTEST_VERIFY(
+	    strcmp(STR_VAL, (__cheri_fromcap char *)target) == 0);
+
+	/* Make cap local */
+	cap = cheri_andperm(cap, ~CHERI_PERM_GLOBAL);
+
+	/* Store local cap through cap with store-local permission */
+	*targetp = cap;
+	CHERIBSDTEST_VERIFY(
+	    strcmp(STR_VAL, (__cheri_fromcap char *)target) == 0);
+
+	/* Store local cap through cap without store-local permission */
+	targetp = cheri_andperm(targetp, ~CHERI_PERM_STORE_LOCAL_CAP);
+	/* This should fault */
+	*targetp = cap;
+
+	cheribsdtest_failure_errx(
+	    "No fault after storing local cap via non-store-local cap");
+}
