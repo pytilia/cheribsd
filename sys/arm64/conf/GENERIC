@@ -146,6 +146,7 @@ device		virtio_pci
 device		virtio_mmio
 device		virtio_blk
 device		vtnet
+device		contigmem
 
 # CPU frequency control
 device		cpufreq

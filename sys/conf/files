@@ -3469,6 +3469,7 @@ dev/veriexec/verified_exec.c	optional veriexec mac_veriexec
 dev/vge/if_vge.c		optional vge
 dev/viapm/viapm.c		optional viapm pci
 dev/virtio/virtio.c			optional	virtio
+dev/contigmem/contigmem.c		optional	contigmem
 dev/virtio/virtqueue.c			optional	virtio
 dev/virtio/virtio_bus_if.m		optional	virtio
 dev/virtio/virtio_if.m			optional	virtio
